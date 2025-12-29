@@ -1,16 +1,60 @@
+import { Navigate, useLocation } from "react-router-dom";
 
-import { Navigate, Outlet } from "react-router-dom";
-export default function CheckAuth({ isAuthenticated, user, children }) {
-  // When no children are passed, this works like a redirect handler
-  if (!children) {
-    return isAuthenticated ? (
-      <Navigate to="/" />
-    ) : (
-      <Navigate to="/auth/login" />
-    );
+function CheckAuth({ isAuthenticated, user, children }) {
+  const location = useLocation();
+  console.log(location.pathname, isAuthenticated,"authentication");
+
+  if (location.pathname === "/") {
+    if (!isAuthenticated) {
+      return <Navigate to="/auth/login" />;
+    } else {
+      if (user?.role === "admin") {
+        return <Navigate to="/admin" />;
+      } else {
+        return <Navigate to="/betting" />;
+      }
+    }
   }
-  // Protected route check
-   if (!isAuthenticated)
-   return <Navigate to="/auth/login" />;
-  return children;
+
+  if (
+    !isAuthenticated &&
+    !(
+      location.pathname.includes("/login") ||
+      location.pathname.includes("/register")
+    )
+  ) {
+    return <Navigate to="/auth/login" />;
+  }
+
+  if (
+    isAuthenticated &&
+    (location.pathname.includes("/login") ||
+      location.pathname.includes("/register"))
+  ) {
+    if (user?.role === "admin") {
+      return <Navigate to="/admin" />;
+    } else {
+      return <Navigate to="/betting" />;
+    }
+  }
+
+  if (
+    isAuthenticated &&
+    user?.role !== "admin" &&
+    location.pathname.includes("admin")
+  ) {
+    return <Navigate to="/unauth-page" />;
+  }
+
+  if (
+    isAuthenticated &&
+    user?.role === "admin" &&
+    location.pathname.includes("shop")
+  ) {
+    return <Navigate to="/admin/dashboard" />;
+  }
+
+  return <>{children}</>;
 }
+
+export default CheckAuth;
